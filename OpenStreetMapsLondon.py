@@ -38,9 +38,9 @@ def get_element(osm_file, tags=('node', 'way', 'relation')):
 
 
 with open(SAMPLE_FILE, 'wb') as output:
+    '''writes the SAMPLE_FILE from the OSM_FILE'''
     output.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     output.write('<osm>\n  ')
-
     # Write every kth top level element
     for i, element in enumerate(get_element(OSM_FILE)):
         if i % k == 0:

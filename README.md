@@ -1,5 +1,6 @@
 # OpenStreetMap-London
 OpenStreetMap data about London, UK that I cleaned and analyzed, as part of my Data Analyst Nanodegree from Udacity.
+The data was cleaned and analyzed using python, and information was query and aggregated using SQL for the report.
 
 Files:
 Report.pdf - The report that I made about the data using Python during the cleaning and exploration phase, 

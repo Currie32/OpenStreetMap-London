@@ -20,14 +20,15 @@ import string
 #!/usr/bin/env python
 
 
-OSM_FILE = "/Users/Dave/Desktop/Programming/Personal Projects/OpenStreetMap/london_england.osm"  # Replace this with your osm file
+#OSM_FILE contains all the data, SAMPLE_FILE contain just a sample
+OSM_FILE = "/Users/Dave/Desktop/Programming/Personal Projects/OpenStreetMap/london_england.osm" 
 SAMPLE_FILE = "/Users/Dave/Desktop/Programming/Personal Projects/OpenStreetMap/sample_london.osm"
 
+#This gives us 1/500 of the data for my sample
 k = 500 # Parameter: take every k-th top level element
 
 def get_element(osm_file, tags=('node', 'way', 'relation')):
-    """Yield element if it is the right type of tag
-    """
+    """Yield element if it is the right type of tag"""
     context = iter(ET.iterparse(osm_file, events=('start', 'end')))
     _, root = next(context)
     for event, elem in context:
@@ -50,14 +51,13 @@ with open(SAMPLE_FILE, 'wb') as output:
 
 # Information about users: 
 
-# In[3]:
+# In[4]:
 
 #1.1
 def users(filename):
     '''Returns how many users there are from a file (filename), and how many edits each of them have.'''
     users = {}
     for _, element in ET.iterparse(filename):
-        tag = element.tag
         if element.get('uid'):
             id = element.attrib['uid']
             if id not in users:
@@ -67,7 +67,7 @@ def users(filename):
     return users
 
 
-# In[4]:
+# In[5]:
 
 #1.2
 def total_user_edits(filename):
@@ -76,7 +76,7 @@ def total_user_edits(filename):
     return sum(all_users.values())
 
 
-# In[5]:
+# In[6]:
 
 #1.3
 def top_users(number_of_users, filename):
@@ -85,20 +85,20 @@ def top_users(number_of_users, filename):
     make what percentage of the total edits from a file.'''
     all_users = users(filename)
     sorted_users = sorted(all_users.items(), key=operator.itemgetter(1), reverse = True)
-    a = total_user_edits(filename)
+    total_edits = total_user_edits(filename)
     i = 1
-    top_ten = 0.0
+    top_users = 0.0
     for user in sorted_users:
-        top_ten += user[1]
+        top_users += user[1]
         if i == number_of_users:
-            print top_ten
-            print round(top_ten/a,4)
+            print top_users
+            print round(top_users/total_edits,4)
         i += 1
 
 
 # Types of Keys:
 
-# In[6]:
+# In[8]:
 
 #2.1
 '''
@@ -112,7 +112,7 @@ lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
 problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
 
 
-# In[7]:
+# In[9]:
 
 #2.2
 def key_type(element, keys):
@@ -130,7 +130,7 @@ def key_type(element, keys):
     return keys
 
 
-# In[8]:
+# In[10]:
 
 #2.3
 def count_key_type(filename):
@@ -143,27 +143,27 @@ def count_key_type(filename):
 
 # Create Useful Functions:
 
-# In[9]:
+# In[12]:
 
 #3.1
-def audit_key(osmfile, key):
+def audit_key(filename, key):
     '''Find all the values for a particular key and returns a dictionary of all of the unique values.'''
-    osm_file = open(osmfile, "r")
+    the_file = open(filename, "r")
     dic = set()
-    for event, elem in ET.iterparse(osm_file, events=("start",)):
+    for event, elem in ET.iterparse(the_file, events=("start",)):
         for tag in elem.iter("tag"):
             if tag.attrib['k'] == key:
                 dic.add(tag.attrib['v'])
-    osm_file.close()
+    the_file.close()
     return dic
 
 
-# In[10]:
+# In[13]:
 
 #3.2
-def update_value(osmfile, key, old_v, new_v):
+def update_value(filename, key, old_v, new_v):
     '''Replaces the old values (old_v) with new_values (new_v) from a particular key.'''
-    e = ET.parse(osmfile)
+    e = ET.parse(filename)
     for tag in e.iter("tag"):
         if tag.attrib['k'] == key:
             if tag.attrib['v'] == old_v:
@@ -173,7 +173,7 @@ def update_value(osmfile, key, old_v, new_v):
 
 # Update the Street Types:
 
-# In[11]:
+# In[14]:
 
 #4.1
 '''A list of all of the street types I expect to find.'''
@@ -181,14 +181,14 @@ expected_streets = ["Street", "Avenue", "Boulevard", "Drive", "Court", "Place", 
             "Trail", "Parkway", "Commons", "Close"]
 
 
-# In[12]:
+# In[15]:
 
 #4.2
 '''Compile a regular expression pattern.'''
 street_type_re = re.compile(r'\b\S+\.?$', re.IGNORECASE)
 
 
-# In[13]:
+# In[16]:
 
 #4.3
 def audit_street_type(street_types, street_name):
@@ -200,36 +200,36 @@ def audit_street_type(street_types, street_name):
             street_types[street_type].add(street_name)
 
 
-# In[14]:
+# In[17]:
 
 #4.4
-def audit_streets(osmfile):
+def audit_streets(filename):
     '''Finds and creates a dictionary of all the unexpected street types.'''
-    osm_file = open(osmfile, "r")
+    the_file = open(filename, "r")
     street_types = defaultdict(set)
-    for event, elem in ET.iterparse(osm_file, events=("start",)):
+    for event, elem in ET.iterparse(the_file, events=("start",)):
 
         if elem.tag == "node" or elem.tag == "way":
             for tag in elem.iter("tag"):
                 if tag.attrib['k'] == 'addr:street':
                     audit_street_type(street_types, tag.attrib['v'])
-    osm_file.close()
+    the_file.close()
     return street_types
 
 
-# In[15]:
+# In[18]:
 
 #4.5
 '''A dictionary of street types that need to be corrected.'''
 corrected_street_types = {"Ave": "Avenue"}
 
 
-# In[16]:
+# In[19]:
 
 #4.6
-def update_street_name(osmfile, old_v, new_v):
+def update_street_name(filename, old_v, new_v):
     '''Replaces the old street types (old_v) with new street types (new_v) and returns the new street name.'''
-    e = ET.parse(osmfile)
+    e = ET.parse(filename)
     for tag in e.iter("tag"):
         if tag.attrib['k'] == 'addr:street':
             if old_v in tag.attrib['v']:
@@ -244,14 +244,14 @@ def update_street_name(osmfile, old_v, new_v):
 
 # Update City Names:
 
-# In[17]:
+# In[20]:
 
 #5.1
 '''Find all the city names.'''
 audit_key(SAMPLE_FILE, 'addr:city')
 
 
-# In[18]:
+# In[21]:
 
 #5.2
 '''Create a dictionary to correct all the incorract city names.'''
@@ -268,14 +268,14 @@ corrected_city_names = {'key_name': 'addr:city',
 
 # Update Types of Building:
 
-# In[19]:
+# In[22]:
 
 #6.1
 '''Find all the types of buildings.'''
 audit_key(SAMPLE_FILE, 'building')
 
 
-# In[20]:
+# In[23]:
 
 #6.2
 '''There are no types of buildings that need to be corrected, so no further action will be taken.'''
@@ -283,14 +283,14 @@ audit_key(SAMPLE_FILE, 'building')
 
 # Update Types of Amenities: 
 
-# In[21]:
+# In[24]:
 
 #7.1
 '''Find all the types of amenities.'''
 audit_key(SAMPLE_FILE, 'amenity')
 
 
-# In[22]:
+# In[25]:
 
 #7.2
 '''There are no types of amenities that need to be corrected, so no further action will be taken.'''
@@ -298,14 +298,14 @@ audit_key(SAMPLE_FILE, 'amenity')
 
 # Update Speed Limits:
 
-# In[23]:
+# In[26]:
 
 #8.1
 '''Find all the speed limits.'''
 audit_key(SAMPLE_FILE, 'maxspeed')
 
 
-# In[24]:
+# In[27]:
 
 #8.2
 '''Create a dictionary to correct all the incorract speed limits.'''
@@ -319,14 +319,14 @@ corrected_speed_limits = {'key_name': 'maxspeed',
 
 # Update Postal Codes:
 
-# In[25]:
+# In[28]:
 
 #9.1
 '''Find all the postal codes.'''
 audit_key(SAMPLE_FILE, 'addr:postcode')
 
 
-# In[26]:
+# In[29]:
 
 #9.2
 '''Create a dictionary to correct all the incorract postal codes.'''
@@ -339,14 +339,14 @@ corrected_postal_codes = {'key_name': 'addr:postcode',
 
 # Update Sources:
 
-# In[27]:
+# In[30]:
 
 #10.1
 '''Find all the sources.'''
 audit_key(SAMPLE_FILE, 'source')
 
 
-# In[28]:
+# In[31]:
 
 #10.2
 '''Create a dictionary to correct all the incorract sources.'''
@@ -391,7 +391,7 @@ corrected_sources = {'key_name': 'source',
 
 # Convert the XML data into csv:
 
-# In[29]:
+# In[32]:
 
 #11.1
 '''Perpare the scheme and all the files that the data will be written to.'''
@@ -466,7 +466,7 @@ corrected_dictionaries = [corrected_city_names,
 
 key_names = ['addr:city', 'maxspeed', 'addr:postcode', 'source']
 
-OSM_PATH = SAMPLE_FILE
+OSM_PATH = SAMPLE_FILE #File to use for export
 NODES_PATH = "/Users/Dave/Desktop/Programming/Personal Projects/OpenStreetMap/nodes.csv"
 NODE_TAGS_PATH = "/Users/Dave/Desktop/Programming/Personal Projects/OpenStreetMap/nodes_tags.csv"
 WAYS_PATH = "/Users/Dave/Desktop/Programming/Personal Projects/OpenStreetMap/ways.csv"
@@ -485,7 +485,7 @@ WAY_TAGS_FIELDS = ['id', 'key', 'value', 'type']
 WAY_NODES_FIELDS = ['id', 'node_id', 'position']
 
 
-# In[30]:
+# In[33]:
 
 #11.2
 def correct_k(k):
@@ -569,7 +569,7 @@ def shape_element(element, node_attr_fields=NODE_FIELDS, way_attr_fields=WAY_FIE
         return {'way': way_attribs, 'way_nodes': way_nodes, 'way_tags': tags}
 
 
-# In[31]:
+# In[34]:
 
 #11.3
 def get_element(osm_file, tags=('node', 'way', 'relation')):
@@ -582,7 +582,7 @@ def get_element(osm_file, tags=('node', 'way', 'relation')):
             root.clear()
 
 
-# In[32]:
+# In[35]:
 
 #11.4
 def validate_element(element, validator, schema=SCHEMA):
@@ -599,7 +599,7 @@ def validate_element(element, validator, schema=SCHEMA):
         )
 
 
-# In[33]:
+# In[36]:
 
 #11.5
 class UnicodeDictWriter(csv.DictWriter, object):
